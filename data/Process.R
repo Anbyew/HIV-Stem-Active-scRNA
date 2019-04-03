@@ -25,11 +25,19 @@ pbmc <- FilterCells(object = pbmc, subset.names = c("nGene", 'nUMI', "percent.mi
                     low.thresholds = c(2500, 10000, -Inf), high.thresholds = c(8500, 110000, 0.125))
 
 #Normalization
+par(mfrow = c(1, 1))
 pbmc <- NormalizeData(object = pbmc, normalization.method = "LogNormalize", 
                       scale.factor = 10000)
 pbmc <- FindVariableGenes(object = pbmc, mean.function = ExpMean, dispersion.function = LogVMR, 
-                          x.low.cutoff = 0.0125, x.high.cutoff = 4.4, y.cutoff = 0.8)
-length(x = pbmc@var.genes)#1380
+                          x.low.cutoff = 0.0125, x.high.cutoff = 4.4, y.cutoff = 0.8)##
+pbmc <- FindVariableGenes(object = pbmc, mean.function = ExpMean, dispersion.function = LogVMR, 
+                          selection.method = dispersion, x.low.cutoff = 0.0125, x.high.cutoff = 4.4, 
+                          y.cutoff = 0.5)
+pbmc <- FindVariableGenes(object = pbmc, mean.function = ExpMean, dispersion.function = LogVMR, 
+                          selection.method = "dispersion", top.genes=3000) 
+                         
+
+length(x = pbmc@var.genes)#3000
 pbmc <- ScaleData(object = pbmc, vars.to.regress = c("nUMI", "percent.mito"))
 
 #Dimension Reduction, PCA, Heatmap
