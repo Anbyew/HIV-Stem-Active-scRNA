@@ -83,7 +83,76 @@ ggplot(viral_counts,aes(x=log2_TPM,y=Density))+geom_line()+
 
 # really splitting the data
 load("/Users/anbyew/Desktop/Project/data/Rdata.RData")
-infected <- hspc@data["HIV",] < 3.5
+infected <- hspc@data["HIV",] < 3.5 #True: HIV low expression-stem, False: HIV high expression-diff
 hspc <- AddMetaData(object = hspc, metadata = infected, col.name = "infected")
 hspc.list <- SplitObject(hspc, attribute.1 = "infected")
 saveRDS(hspc.list, file = "hspc.list.rds")
+
+
+
+#Determine the ‘dimensionality’ of the dataset
+hspc <- JackStraw(object = hspc, num.replicate = 100)
+hspc <- ScoreJackStraw(object = hspc, dims = 1:20)
+JackStrawPlot(object = hspc, dims = 1:15)
+ElbowPlot(object = hspc)
+
+hspc <- FindNeighbors(object = hspc, dims = 1:10)
+hspc <- FindClusters(object = hspc, resolution = 0.5)
+head(x = Idents(object = hspc), 5)
+hspc <- RunUMAP(object = hspc, dims = 1:10)
+DimPlot(object = hspc, reduction = "umap")
+
+#Cluster cells
+hspc <- FindClusters(object = hspc, reduction.type = "pca", dims.use = 1:10, #1:10
+                      resolution = 1, print.output = 0, save.SNN = TRUE)####0.6
+PrintFindClustersParams(object = hspc)
+hspc <- RunTSNE(object = hspc, dims.use = 1:10, do.fast = TRUE)#20
+TSNEPlot(object = hspc, do.label=TRUE, label.size=6)
+
+#FeaturePlot
+FeaturePlot(object=hspc, features.plot=c("mCherry"), cols.use=c("pink", "red"), 
+            reduction.use="tsne", do.return=T)
+FeaturePlot(object=hspc, features.plot=c("PROM1"), cols.use=c("lightblue", "blue"), 
+            reduction.use="tsne", do.return=T)
+FeaturePlot(object=hspc, features.plot=c("HIV"), cols.use=c("yellow", "orange"), 
+            +             reduction.use="tsne", do.return=T)
+
+
+#Add cluster label to metadata, and then split
+clusterlb <- c(hspc@ident)
+hspc <- AddMetaData(object = hspc, metadata = clusterlb, col.name = "classlb")
+hspc.list <- SplitObject(hspc, attribute.1 = "infected")
+saveRDS(hspc.list, file = "hspc.list.rds")
+saveRDS(hspc, file = "hspc2.rds")
+
+
+#DE!!! #Find DE between (0, 1, 6, 10) VS (rest)
+cluster0.markers <- FindMarkers(object = hspc, ident.1 = 0, 
+                                ident.2 = c(2,3,4,5,7,8,9,11,12,13,14,15), 
+                                min.pct = 0.1)
+cluster1.markers <- FindMarkers(object = hspc, ident.1 = 1, 
+                                ident.2 = c(2,3,4,5,7,8,9,11,12,13,14,15), 
+                                min.pct = 0.1)
+cluster6.markers <- FindMarkers(object = hspc, ident.1 = 6, 
+                                ident.2 = c(2,3,4,5,7,8,9,11,12,13,14,15), 
+                                min.pct = 0.1)
+cluster10.markers <- FindMarkers(object = hspc, ident.1 = 10, 
+                                ident.2 = c(2,3,4,5,7,8,9,11,12,13,14,15), 
+                                min.pct = 0.1)
+hspc.markers <- FindAllMarkers(object = hspc, only.pos = TRUE, min.pct = 0.25, 
+                               thresh.use = 0.25)
+hspc.markers %>% group_by(cluster) %>% top_n(2, avg_logFC)
+
+VlnPlot(object = hspc, features.plot = c("HOPX", "CD34"))
+VlnPlot(object = hspc, features.plot = c("C1QTNF4", "PROM1"))
+VlnPlot(object = hspc, features.plot = c("CLDN10", "SPINK2"))
+
+FeaturePlot(object = hspc, features.plot = c("C1QTNF4", "HOPX", "CD34", 
+                                             "SPINK2", "PROM1", "CLDN10",
+                                             "HIV", "mCherry", "LMNA"), 
+            cols.use = c("grey", "blue"), 
+            reduction.use = "tsne")
+
+FeaturePlot(object = hspc, features.plot = c("IFITM1"), 
+            cols.use = c("grey", "blue"), 
+            reduction.use = "tsne")
