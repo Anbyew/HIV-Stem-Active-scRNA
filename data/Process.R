@@ -1,5 +1,5 @@
 setwd("~/Desktop/Project/data")
-library(Seurat)
+library(Seurat)#v2.3.4
 library(dplyr)
 library(hdf5r)
 data <- Read10X(data.dir = ".")
@@ -8,7 +8,7 @@ dense.size#1.08GB
 sparse.size <- object.size(x = data)
 sparse.size#328.8MB
 dense.size/sparse.size#3.4B
-pbmc <- CreateSeuratObject(raw.data = data, min.cells = 3, min.genes = 200, project = "10X_PBMC")
+pbmc <- CreateSeuratObject(raw.data = data, min.cells = 3, min.genes = 200, project = "BIOINF545")
 
 #QC
 #nGene: the number of genes for each cell sample
@@ -21,8 +21,8 @@ VlnPlot(object = pbmc, features.plot = c("nGene", "nUMI", "percent.mito"), nCol 
 par(mfrow = c(1, 2))
 GenePlot(object = pbmc, gene1 = "nUMI", gene2 = "percent.mito")
 GenePlot(object = pbmc, gene1 = "nUMI", gene2 = "nGene")
-pbmc <- FilterCells(object = pbmc, subset.names = c("nGene", 'nUMI', "percent.mito"), 
-                    low.thresholds = c(2500, 10000, -Inf), high.thresholds = c(8500, 110000, 0.125))
+pbmc <- FilterCells(object = pbmc, subset.names = c("nGene","percent.mito"), 
+                    low.thresholds = c(-Inf, -Inf), high.thresholds = c(8500, 0.125))
 
 #Normalization
 par(mfrow = c(1, 1))
@@ -35,12 +35,12 @@ pbmc <- FindVariableGenes(object = pbmc, mean.function = ExpMean, dispersion.fun
                           y.cutoff = 0.5)
 pbmc <- FindVariableGenes(object = pbmc, mean.function = ExpMean, dispersion.function = LogVMR, 
                           selection.method = "dispersion", top.genes=3000) 
-                         
-
+                        
 length(x = pbmc@var.genes)#3000
 pbmc <- ScaleData(object = pbmc, vars.to.regress = c("nUMI", "percent.mito"))
 
 #Dimension Reduction, PCA, Heatmap
+pbmc <- RunPCA(object = pbmc, features = VariableFeatures(object = pbmc))
 pbmc <- RunPCA(object = pbmc, pc.genes = pbmc@var.genes, do.print = TRUE, pcs.print = 1:5, 
                genes.print = 5)#Reduce to 20 dimensions
 PrintPCA(object = pbmc, pcs.print = 1:5, genes.print = 5, use.full = FALSE)
@@ -52,12 +52,38 @@ PCHeatmap(object = pbmc, pc.use = 1:12, cells.use = 500, do.balanced = TRUE,
           label.columns = FALSE, use.full = FALSE)
 
 #Cluster cells
-pbmc2 <- FindClusters(object = pbmc, reduction.type = "pca", dims.use = 1:10, 
-                     resolution = 0.6, print.output = 0, save.SNN = TRUE)
+pbmc2 <- FindClusters(object = pbmc, reduction.type = "pca", dims.use = 1:20, #1:10
+                     resolution = 1, print.output = 0, save.SNN = TRUE)####0.6
 PrintFindClustersParams(object = pbmc2)
-pbmc2 <- RunTSNE(object = pbmc2, dims.use = 1:10, do.fast = TRUE)
+pbmc2 <- RunTSNE(object = pbmc2, dims.use = 1:20, do.fast = TRUE)
 TSNEPlot(object = pbmc2)
 saveRDS(pbmc2, file = "pbmc.rds")
 
+#FeaturePlot
+FeaturePlot(object=pbmc, features.plot=c("mCherry"), cols.use=c("pink", "red"), 
+            reduction.use="tsne", do.return=T)
+FeaturePlot(object=pbmc, features.plot=c("PROM1"), cols.use=c("lightblue", "blue"), 
+            reduction.use="tsne", do.return=T)
+hist(pbmc@data["mCherry",])
+plot(density(pbmc2@data["HIV",]))
 
+# splitting the data and plot
+library(ggplot2)
+hspc = readRDS('HSPC_pilot_MV.rds')
+mid_thresh=3.5
+log2_TPM = density(hspc@data["HIV",],from=0,to=max(hspc@data["HIV",]))$x #4294 obs
+Density = density(hspc@data["HIV",],from=0,to=max(hspc@data["HIV",]))$y
+ViralTranscription = rep(c("Low","High"),length(log2_TPM)/2)
+viral_counts = data.frame(log2_TPM,Density,ViralTranscription)
+viral_counts$ViralTranscription[log2_TPM <= mid_thresh]="Low"
+viral_counts$ViralTranscription[log2_TPM > mid_thresh]="High"
 
+ggplot(viral_counts,aes(x=log2_TPM,y=Density))+geom_line()+
+  geom_ribbon(aes(ymin=0,ymax=viral_counts$Density,fill=viral_counts$ViralTranscription))
+
+# really splitting the data
+load("/Users/anbyew/Desktop/Project/data/Rdata.RData")
+infected <- hspc@data["HIV",] < 3.5
+hspc <- AddMetaData(object = hspc, metadata = infected, col.name = "infected")
+hspc.list <- SplitObject(hspc, attribute.1 = "infected")
+saveRDS(hspc.list, file = "hspc.list.rds")
