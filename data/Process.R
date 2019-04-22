@@ -126,6 +126,11 @@ saveRDS(hspc.list, file = "hspc.list.rds")
 saveRDS(hspc, file = "hspc2.rds")
 
 
+#Split to get the 3000 gene data
+hspc3000@data = hspc3000@data[hspc3000@var.genes,]
+saveRDS(hspc3000, file = "hspc3000.rds")
+
+
 #DE!!! #Find DE between (0, 1, 6, 10) VS (rest)
 cluster0.markers <- FindMarkers(object = hspc, ident.1 = 0, 
                                 ident.2 = c(2,3,4,5,7,8,9,11,12,13,14,15), 
@@ -156,3 +161,14 @@ FeaturePlot(object = hspc, features.plot = c("C1QTNF4", "HOPX", "CD34",
 FeaturePlot(object = hspc, features.plot = c("IFITM1"), 
             cols.use = c("grey", "blue"), 
             reduction.use = "tsne")
+
+
+# print out row names for each cluster markers
+write.table(row.names(cluster0.markers[cluster0.markers[,"p_val_adj"]<0.05,]), file = "c0.txt", sep = "\t",
+            row.names = FALSE, col.names = FALSE, quote=FALSE)
+write.table(row.names(cluster1.markers[cluster1.markers[,"p_val_adj"]<0.05,]), file = "c1.txt", sep = "\t",
+            row.names = FALSE, col.names = FALSE, quote=FALSE)
+write.table(row.names(cluster10.markers[cluster10.markers[,"p_val_adj"]<0.05,]), file = "c10.txt", sep = "\t",
+            row.names = FALSE, col.names = FALSE, quote=FALSE)
+write.table(row.names(cluster6.markers[cluster6.markers[,"p_val_adj"]<0.05,]), file = "c6.txt", sep = "\t",
+            row.names = FALSE, col.names = FALSE, quote=FALSE)
