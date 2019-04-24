@@ -144,9 +144,21 @@ cluster6.markers <- FindMarkers(object = hspc, ident.1 = 6,
 cluster10.markers <- FindMarkers(object = hspc, ident.1 = 10, 
                                 ident.2 = c(2,3,4,5,7,8,9,11,12,13,14,15), 
                                 min.pct = 0.1)
-hspc.markers <- FindAllMarkers(object = hspc, only.pos = TRUE, min.pct = 0.25, 
-                               thresh.use = 0.25)
+highlow.markers <- FindMarkers(object = hspc, ident.1 = c(0,1,4,6,10), 
+                               ident.2 = c(2,3,5,7,8,9,11,12,13,14,15), 
+                                min.pct = 0.25)
+
 hspc.markers %>% group_by(cluster) %>% top_n(2, avg_logFC)
+highlow.markers <- FindMarkers(object = hspc, ident.1 = c(0,1,4,6,10), 
+                               ident.2 = c(2,3,5,7,8,9,11,12,13,14,15), 
+                               min.pct = 0.25)
+highlow.markers[highlow.markers$p_val_adj>0.05,]#180 genes#233
+
+lowhigh.markers <- FindMarkers(object = hspc, ident.1 = c(2,3,5,7,8,9,11,12,13,14,15), 
+                               ident.2 = c(0,1,4,6,10), 
+                               min.pct = 0.25)
+lowhigh.markers[lowhigh.markers$p_val_adj<0.05,]#
+
 
 VlnPlot(object = hspc, features.plot = c("HOPX", "CD34"))
 VlnPlot(object = hspc, features.plot = c("C1QTNF4", "PROM1"))
@@ -158,10 +170,12 @@ FeaturePlot(object = hspc, features.plot = c("C1QTNF4", "HOPX", "CD34",
             cols.use = c("grey", "blue"), 
             reduction.use = "tsne")
 
-FeaturePlot(object = hspc, features.plot = c("IFITM1"), 
+FeaturePlot(object = hspc, features.plot = c("C1QTNF4", "SPINK2", "EGFL7", "C19orf77",
+                                             "HOPX", "CLDN10", "HIV", "mCherry", "LMNA"), 
             cols.use = c("grey", "blue"), 
             reduction.use = "tsne")
-
+VlnPlot(object = hspc, features.plot = c("C1QTNF4", "SPINK2", "EGFL7", "C19orf77",
+                                         "HOPX", "CLDN10"))
 
 # print out row names for each cluster markers
 write.table(row.names(cluster0.markers[cluster0.markers[,"p_val_adj"]<0.05,]), file = "c0.txt", sep = "\t",
@@ -172,3 +186,34 @@ write.table(row.names(cluster10.markers[cluster10.markers[,"p_val_adj"]<0.05,]),
             row.names = FALSE, col.names = FALSE, quote=FALSE)
 write.table(row.names(cluster6.markers[cluster6.markers[,"p_val_adj"]<0.05,]), file = "c6.txt", sep = "\t",
             row.names = FALSE, col.names = FALSE, quote=FALSE)
+
+write.table(row.names(highlow.markers[highlow.markers[,"p_val_adj"]<0.05,]), file = "highlow.txt", sep = "\t",
+            row.names = FALSE, col.names = FALSE, quote=FALSE)
+write.table(row.names(lowhigh.markers[lowhigh.markers[,"p_val_adj"]<0.05,]), file = "lowhigh.txt", sep = "\t",
+            row.names = FALSE, col.names = FALSE, quote=FALSE)
+
+
+highlow.markers['PNMT',]
+highlow.markers['HOPX',]
+highlow.markers['FAM178B',]
+highlow.markers['NEAT1',]
+highlow.markers['LGALS1',]
+highlow.markers['MYC',]
+highlow.markers['MS4A6A',]
+highlow.markers['ACY3',]
+highlow.markers['MPEG1',]
+highlow.markers['CLU',]
+highlow.markers['C1QTNF4',]
+highlow.markers['SAT1',]
+highlow.markers['CKB',]
+highlow.markers['HBD',]
+highlow.markers['TYROBP',]
+highlow.markers['PRSS57',]
+highlow.markers['CES1',]
+highlow.markers['FABP5',]
+highlow.markers['HMGB1',]
+highlow.markers['DMTN',]
+
+
+
+
