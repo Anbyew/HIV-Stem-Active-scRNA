@@ -192,6 +192,8 @@ write.table(row.names(highlow.markers[highlow.markers[,"p_val_adj"]<0.05,]), fil
 write.table(row.names(lowhigh.markers[lowhigh.markers[,"p_val_adj"]<0.05,]), file = "lowhigh.txt", sep = "\t",
             row.names = FALSE, col.names = FALSE, quote=FALSE)
 
+write.csv(highlow.markers, file = "highlow.markers.csv")
+write.csv(lowhigh.markers, file = "lowhigh.markers.csv")
 
 highlow.markers['PNMT',]
 highlow.markers['HOPX',]
