@@ -79,7 +79,11 @@ viral_counts$ViralTranscription[log2_TPM <= mid_thresh]="Low"
 viral_counts$ViralTranscription[log2_TPM > mid_thresh]="High"
 
 ggplot(viral_counts,aes(x=log2_TPM,y=Density))+geom_line()+
-  geom_ribbon(aes(ymin=0,ymax=viral_counts$Density,fill=viral_counts$ViralTranscription))
+  geom_ribbon(aes(ymin=0,ymax=viral_counts$Density,fill=viral_counts$ViralTranscription))+
+  xlab("log2['HIV' Expression]") + 
+  ggtitle("HIV Transcription Level")+
+  guides(fill=guide_legend(title=""))
+
 
 # really splitting the data
 load("/Users/anbyew/Desktop/Project/data/Rdata.RData")
@@ -174,8 +178,19 @@ FeaturePlot(object = hspc, features.plot = c("C1QTNF4", "SPINK2", "EGFL7", "C19o
                                              "HOPX", "CLDN10", "HIV", "mCherry", "LMNA"), 
             cols.use = c("grey", "blue"), 
             reduction.use = "tsne")
+FeaturePlot(object = hspc, features.plot = c("C1QTNF4",  "IGLL1", "C19orf77",
+                                             "PRSS57",   "EGFL7",  "SUCNR1",   
+                                             "SORL1",    "CLDN10", "RPL36"  ), 
+            cols.use = c("grey", "blue"), 
+            reduction.use = "tsne")
 VlnPlot(object = hspc, features.plot = c("C1QTNF4", "SPINK2", "EGFL7", "C19orf77",
                                          "HOPX", "CLDN10"))
+
+FeaturePlot(object = hspc, features.plot = c("C1QTNF4",  "IGLL1", "C19orf77",
+                                             "PRSS57",   "EGFL7",  "PROM1",   
+                                             "HIV",    "mCherry", "LMNA"  ), 
+            cols.use = c("grey", "blue"), 
+            reduction.use = "tsne")
 
 # print out row names for each cluster markers
 write.table(row.names(cluster0.markers[cluster0.markers[,"p_val_adj"]<0.05,]), file = "c0.txt", sep = "\t",
